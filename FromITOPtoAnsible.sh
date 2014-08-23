@@ -20,7 +20,7 @@
 # Parameters: Change this according to your itop credentials 
 MY_USER=replace_for_your_itop_user
 MY_PASS=replace_for_your_itop_password
-ITOP_SERVER=itop.hi.inet 
+ITOP_SERVER=replace_for_your_itop_server
 # End of configurable parameters
 
 # Other parameters

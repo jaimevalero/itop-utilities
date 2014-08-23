@@ -18,8 +18,8 @@
 ############################################################## 
 
 # Parameters: Change this according to your itop credentials 
-MY_USER=admin 
-MY_PASS=admin 
+MY_USER=replace_for_your_itop_user
+MY_PASS=replace_for_your_itop_password
 ITOP_SERVER=itop.hi.inet 
 # End of configurable parameters
 

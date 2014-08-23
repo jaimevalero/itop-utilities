@@ -59,7 +59,7 @@ PreWork( )
 
 QueryITOP( )
 {
-	wget -q -O $TEMP_CSV_FILE --http-user=$MY_USER --http-password=$MY_PASS \ ${SERVER}${URL_STRING}${LAST_URL_OPTIONS}
+	wget -q -O $TEMP_CSV_FILE --http-user=$MY_USER --http-password=$MY_PASS  ${SERVER}${URL_STRING}${LAST_URL_OPTIONS}
 }
 
 BuildYAMLOutput( )

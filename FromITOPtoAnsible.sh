@@ -66,7 +66,8 @@ BuildYAMLOutput( )
 {
 	grep -v "\[" $TEMP_CSV_FILE > $TEMP_CSV_FILE.tmp
 	mv -f $TEMP_CSV_FILE.tmp $TEMP_CSV_FILE
-	HOST_LIST=` cat $TEMP_CSV_FILE |  grep \" |  sed ':a;N;$!ba;s/\n/ , /g'` }
+	HOST_LIST=` cat $TEMP_CSV_FILE |  grep \" |  sed ':a;N;$!ba;s/\n/ , /g'` 
+}
 
 ReturnHostsList( )
 {
@@ -75,7 +76,8 @@ ReturnHostsList( )
 
 PostWork( )
 {
-	rm -f $TEMP_CSV_FILE.tmp $TEMP_CSV_FILE 2>/dev/null }
+	rm -f $TEMP_CSV_FILE.tmp $TEMP_CSV_FILE 2>/dev/null 
+}
 
 ############################
 # Main

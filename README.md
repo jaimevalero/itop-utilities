@@ -5,7 +5,7 @@ Utilities scripts for itop, an open source cmdb.
 
 Empowers CMDB by connectincg to other system like Ansible.
 
-FromITOPtoAnsible.sh
+Script FromITOPtoAnsible.sh
 ==
 
  This script pulls info from an ITOP cmdb to generate  a yaml hosts list to be used as a Dynamic Inventory Source for ansible commands.
@@ -14,7 +14,7 @@ FromITOPtoAnsible.sh
  For example, you can send commands to all machines of a given rack, or those plugged to a specific network device, or those having related open tickets. You have to define a set of hosts by using an OQL select statement.
  
  
-Parameters 
+Scipt parameters 
 =====
  
  
@@ -22,7 +22,7 @@ Parameters
   * OQL = Sentence in OQL 
   * FIELD = (optional) name of the field to be used as hostname 
  
-Usage example 
+Script usage example 
 ====
 
 

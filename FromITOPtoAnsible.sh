@@ -2,19 +2,33 @@
 
 ##############################################################
 #
-# This script pulls info from an ITOP cmdb to generate # a yaml hosts list to be used as a Dynamic Inventory Source # for ansible commands # # Parameters : Passed as enviroment variable #  OQL = Sentence in OQL #  FIELD = (optional) name of the field to be used as hostname # # Usage example :
+# This script pulls info from an ITOP cmdb to generate 
+# a yaml hosts list to be used as a Dynamic Inventory Source 
+# for ansible commands 
+# 
+# Parameters : Passed as enviroment variable 
+#  OQL = Sentence in OQL 
+#  FIELD = (optional) name of the field to be used as hostname 
+# 
+# Usage example :
 #   
-# Do a ping against all VM belonging to hypervisor prod-epg-esxi-04.hi.inet # export OQL="SELECT VirtualMachine WHERE virtualhost_name = 'prod-epg-esxi-04.hi.inet' " ; ansible all -i FromITOPtoAnsible.sh -m shell -m "ping"
+# Do a ping against all VM belonging to hypervisor prod-epg-esxi-04.hi.inet 
+# export OQL="SELECT VirtualMachine WHERE virtualhost_name = 'prod-epg-esxi-04.hi.inet' " ; ansible all -i FromITOPtoAnsible.sh -m shell -m "ping"
 #
 ############################################################## 
 
-# Parameters: Change this according to your itop credentials MY_USER=admin MY_PASS=admin ITOP_SERVER=itop.hi.inet # End of configurable parameters
+# Parameters: Change this according to your itop credentials 
+MY_USER=admin 
+MY_PASS=admin 
+ITOP_SERVER=itop.hi.inet 
+# End of configurable parameters
 
 # Other parameters
 SERVER="http://$ITOP_SERVER/itop-itsm/webservices/export.php?c%5Bmenu%5D=ExportMenu"
 TEMP_CSV_FILE=out.csv
 
-# This functions is not mine. Credits to # cdown / gist:1163649 https://gist.github.com/cdown/1163649
+# This functions is not mine. Credits to 
+# cdown / gist:1163649 https://gist.github.com/cdown/1163649
 urlencode() {
     # urlencode <string>
  
@@ -28,14 +42,6 @@ urlencode() {
     done
 }
  
-urldecode() {
-    # urldecode <string>
- 
-    local url_encoded="${1//+/ }"
-    printf '%b' "${url_encoded//%/\x}"
-}
-#export OQL='SELECT VirtualMachine  '
-
 # Set variables
 # If env variable FIELD is unset, set it to "name"
 SetVariables( )
@@ -49,7 +55,6 @@ SetVariables( )
 PreWork( )
 {
 	SetVariables
-
 }
 
 QueryITOP( )

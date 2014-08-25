@@ -15,6 +15,7 @@ Script FromITOPtoAnsible.sh
  
 Installation
 =====
+ As a prerequisite, you need an iTop instance, and an Ansible instance too, in the same or in different servers.
  Just copy the script to your ansible machine, in /etc/ansible, and made it executable.
 
 ``` bash 

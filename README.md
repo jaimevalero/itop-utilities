@@ -13,7 +13,16 @@ Script FromITOPtoAnsible.sh
  
  For example, you can send commands to all machines of a given rack, or those plugged to a specific network device, or those having related open tickets. You have to define a set of hosts by using an OQL select statement.
  
- 
+Installation
+=====
+ Just copy the script to your ansible machine, in /etc/ansible, and made it executable.
+
+``` bash 
+ cd /etc/ansible
+ wget --no-check-certificate https://github.com/jaimevalero78/itop-utilities/raw/master/FromITOPtoAnsible.sh  
+ chmod +x /etc/ansible/FromITOPtoAnsible.sh
+``` 
+
 Scipt parameters 
 =====
  

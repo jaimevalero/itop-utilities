@@ -26,7 +26,7 @@ ITOP_SERVER=replace_for_your_itop_server
 # Other parameters
 SERVER="http://$ITOP_SERVER/itop-itsm/webservices/export.php?c%5Bmenu%5D=ExportMenu"
 TEMP_CSV_FILE=out.csv
-AUDIT_FLAG=0
+MODE_FLAG=0
 CATEGORY=
 RULE=
 
@@ -61,8 +61,8 @@ PreWork( )
 {
 	SetVariables
   # If we detect OQL variable is a link from an audit category, change the mode
-  AUDIT_FLAG=` echo $OQL | grep -i http | grep -i category | grep -i rule | wc -l `
-
+  [ ` echo $OQL | grep -i http | grep -i category | grep -i rule | wc -l ` -eq 1 ] && MODE_FLAG='audit'
+  [ ` echo $OQL | grep -i http | grep -i filter  | wc -l`  -eq 1 ] && MODE_FLAG='filter'
 }
 
 QueryITOP( )
@@ -73,6 +73,15 @@ QueryITOP( )
 QueryITOPAudit( )
 {
  curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "http://${ITOP_SERVER}/itop-itsm/pages/audit.php?operation=csv&category=$CATEGORY&rule=$RULE&filename=audit.csv&c%5Borg_id%5D=$ORGANIZATION" > $TEMP_CSV_FILE
+}
+
+QueryITOPFilter( )
+{
+ curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "http://${ITOP_SERVER}/itop-itsm/pages/UI.php?operation=search&filter=${FILTER}&format=csv" > $TEMP_CSV_FILE
+RIGHT_PART=`grep -o  expression.*\"\>Dow  $TEMP_CSV_FILE |  cut -d\" -f1`
+
+ curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "http://${ITOP_SERVER}/itop-itsm/webservices/export.php?${RIGHT_PART}"  > $TEMP_CSV_FILE
+
 }
 
 BuildYAMLOutputAudit( )
@@ -97,7 +106,7 @@ AnsibleReturnHostsList( )
 
 PostWork( )
 {
-	rm -f $TEMP_CSV_FILE.tmp $TEMP_CSV_FILE 2>/dev/null 
+	rm -f $TEMP_CSV_FILE.tmp $TEMP_CSV_FILE headers 2>/dev/null 
 }
 
 ExtractValuesAudit( )
@@ -108,6 +117,13 @@ ExtractValuesAudit( )
   
 }
 
+ExtractValuesFilter( )
+{
+  FILTER=`echo $OQL |  egrep -o --colour  'filter='[a-zA-Z0-9\%]*  | cut -d\= -f2`
+  ORGANIZATION=`echo $OQL | egrep -o --colour 'c\[org_id\]='[0-9]*  | cut -d\= -f2`
+
+}
+
 #
 # Query the OQL looking for audit category or OQL SELECT
 #, urlencode it, send it to the itop server
@@ -115,22 +131,27 @@ ExtractValuesAudit( )
 #
 ItopDialog( )
 {
-if [ $AUDIT_FLAG -eq 0 ]
-then
+  case $MODE_FLAG in
+    0)
+      # Query ITOP's php export webservice
+		  QueryITOP
 
-  # Query ITOP's php export webservice
-  QueryITOP
+		  # Format itop response
+ 			BuildYAMLOutput
+      ;; 
+  ( audit )  #
+		  ExtractValuesAudit
+		  QueryITOPAudit
+		  BuildYAMLOutputAudit
+      ;;
 
-  # Format itop response
-  BuildYAMLOutput
-
-else
-
-  ExtractValuesAudit
-  QueryITOPAudit
-  BuildYAMLOutputAudit
-
-fi
+  ( filter )
+      ExtractValuesFilter
+      QueryITOPFilter
+      BuildYAMLOutputAudit
+     ;;
+esac
+ 
 
 }
 

@@ -24,7 +24,15 @@ Installation
  chmod +x /etc/ansible/FromITOPtoAnsible.sh
 ``` 
 
-Scipt parameters 
+ Also, you have to change the credentials for the itop instance in the script. The parameters you should change are:
+``` bash  
+# Parameters: Change this according to your itop credentials 
+MY_USER=replace_for_your_itop_user
+MY_PASS=replace_for_your_itop_password
+ITOP_SERVER=replace_for_your_itop_server
+``` 
+
+Script parameters 
 =====
  
  

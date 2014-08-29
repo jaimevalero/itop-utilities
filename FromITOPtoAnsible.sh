@@ -18,9 +18,14 @@
 ############################################################## 
 
 # Parameters: Change this according to your itop credentials 
-MY_USER=replace_for_your_itop_user
-MY_PASS=replace_for_your_itop_password
-ITOP_SERVER=replace_for_your_itop_server
+#replace for your itopuser
+MY_USER=admin
+
+#replace for your itop password
+MY_PASS=admin
+
+#replace for your itop server
+ITOP_SERVER=demo.combodo.com
 # End of configurable parameters
 
 # Other parameters

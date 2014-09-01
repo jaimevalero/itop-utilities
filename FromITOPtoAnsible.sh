@@ -18,18 +18,24 @@
 ############################################################## 
 
 # Parameters: Change this according to your itop credentials 
-MY_USER=replace_for_your_itop_user
-MY_PASS=replace_for_your_itop_password
-ITOP_SERVER=replace_for_your_itop_server
+#MY_USER=replace_for_your_itop_user
+#MY_PASS=replace_for_your_itop_password
+#ITOP_SERVER=replace_for_your_itop_server
+MY_USER=admin
+MY_PASS=admin
+ITOP_SERVER=itop.hi.inet
+
+# If we want to use https instead http
+HTTPS=NO
 # End of configurable parameters
 
 # Other parameters
-SERVER="http://$ITOP_SERVER/itop-itsm/webservices/export.php?c%5Bmenu%5D=ExportMenu"
+SERVER="${PROTOCOL}://${ITOP_SERVER}/itop-itsm/webservices/export.php?c%5Bmenu%5D=ExportMenu"
 TEMP_CSV_FILE=out.csv
 MODE_FLAG=0
 CATEGORY=
 RULE=
-
+PROTOCOL=http
 
 
 # This functions is not mine. Credits to 
@@ -51,6 +57,7 @@ urlencode() {
 # If env variable FIELD is unset, set it to "name"
 SetVariables( )
 {
+        [ ` echo $HTTPS | grep -i Y | wc -l ` -eq 1 ] && PROTOCOL=https 
 	[[ -z "$FIELD" ]] && FIELD=name
 	ENCODED_STRING=`urlencode "$OQL"`
 	URL_STRING="&expression="${ENCODED_STRING}
@@ -72,15 +79,15 @@ QueryITOP( )
 
 QueryITOPAudit( )
 {
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "http://${ITOP_SERVER}/itop-itsm/pages/audit.php?operation=csv&category=$CATEGORY&rule=$RULE&filename=audit.csv&c%5Borg_id%5D=$ORGANIZATION" > $TEMP_CSV_FILE
+ curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/itop-itsm/pages/audit.php?operation=csv&category=$CATEGORY&rule=$RULE&filename=audit.csv&c%5Borg_id%5D=$ORGANIZATION" > $TEMP_CSV_FILE
 }
 
 QueryITOPFilter( )
 {
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "http://${ITOP_SERVER}/itop-itsm/pages/UI.php?operation=search&filter=${FILTER}&format=csv" > $TEMP_CSV_FILE
+ curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/itop-itsm/pages/UI.php?operation=search&filter=${FILTER}&format=csv" > $TEMP_CSV_FILE
 RIGHT_PART=`grep -o  expression.*\"\>Dow  $TEMP_CSV_FILE |  cut -d\" -f1`
 
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "http://${ITOP_SERVER}/itop-itsm/webservices/export.php?${RIGHT_PART}"  > $TEMP_CSV_FILE
+ curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/itop-itsm/webservices/export.php?${RIGHT_PART}"  > $TEMP_CSV_FILE
 
 }
 

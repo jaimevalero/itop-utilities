@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 ##############################################################
 #
 # This script pulls info from an ITOP cmdb to generate 
@@ -35,6 +36,8 @@ TEMP_CSV_FILE=out.csv
 MODE_FLAG=0
 CATEGORY=
 RULE=
+CURL_OPTIONS='-s '
+WGET_OPTIONS='-q '
 # End of non configurable parameters
 
 
@@ -58,7 +61,9 @@ urlencode( )
 # If env variable FIELD is unset, set it to "name"
 SetVariables( )
 {
-        [ ` echo $HTTPS | grep -i Y | wc -l ` -eq 1 ] && PROTOCOL=https 
+        # If we use https, change options accordingly
+        [ ` echo $HTTPS | grep -i Y | wc -l ` -eq 1 ] && PROTOCOL=https && CURL_OPTIONS='-s -k ' && WGET_OPTIONS='-q --no-check-certificate'
+
 	[[ -z "$FIELD" ]] && FIELD=name
 	ENCODED_STRING=`urlencode "$OQL"`
         SERVER="${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/export.php?c%5Bmenu%5D=ExportMenu"
@@ -77,20 +82,20 @@ PreWork( )
 
 QueryITOP( )
 {
-	wget -q -O $TEMP_CSV_FILE --http-user=$MY_USER --http-password=$MY_PASS  ${SERVER}${URL_STRING}${LAST_URL_OPTIONS}
+	wget ${WGET_OPTIONS} -O $TEMP_CSV_FILE --http-user=$MY_USER --http-password=$MY_PASS  ${SERVER}${URL_STRING}${LAST_URL_OPTIONS}
 }
 
 QueryITOPAudit( )
 {
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/audit.php?operation=csv&category=$CATEGORY&rule=$RULE&filename=audit.csv&c%5Borg_id%5D=$ORGANIZATION" > $TEMP_CSV_FILE
+ curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/audit.php?operation=csv&category=$CATEGORY&rule=$RULE&filename=audit.csv&c%5Borg_id%5D=$ORGANIZATION" > $TEMP_CSV_FILE
 }
 
 QueryITOPFilter( )
 {
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/UI.php?operation=search&filter=${FILTER}&format=csv" > $TEMP_CSV_FILE
+ curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/UI.php?operation=search&filter=${FILTER}&format=csv" > $TEMP_CSV_FILE
 RIGHT_PART=`grep -o  expression.*\"\>Dow  $TEMP_CSV_FILE |  cut -d\" -f1`
 
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/export.php?${RIGHT_PART}"  > $TEMP_CSV_FILE
+ curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/export.php?${RIGHT_PART}"  > $TEMP_CSV_FILE
 
 }
 

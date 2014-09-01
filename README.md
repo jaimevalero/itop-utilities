@@ -44,11 +44,18 @@ Script usage example
 ====
 
 
- Perform a ping against all VM's belonging to a given hypervisor named prod-epg-esxi-04.hi.inet 
+ Perform a ping against all HP Server against the itop demo instance. http://goo.gl/FrOQdQ 
  
 ``` bash
-export OQL="SELECT VirtualMachine WHERE virtualhost_name = 'prod-epg-esxi-04.hi.inet' "  
+export OQL="SELECT Server WHERE brand_name = 'HP'"
+ 
 ansible all -i FromITOPtoAnsible.sh -m shell -m "ping" 
+
+# The above command would try to access each of the server list : { "hosts" : [ "Server1" , "Server3" , "Server4" , "SRV1" , "SRV1" , "Web" ] }
+# and try to login against it. 
+#It will fail, of course. You have to configure the script to query your own itop instance!
+
+
 ```
 
 

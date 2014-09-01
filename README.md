@@ -47,13 +47,15 @@ Script usage example
  Perform a ping against all HP Server against the itop demo instance. http://goo.gl/FrOQdQ 
  
 ``` bash
+cd /etc/ansible
+
 export OQL="SELECT Server WHERE brand_name = 'HP'"
  
 ansible all -i FromITOPtoAnsible.sh -m shell -m "ping" 
 
 # The above command would try to access each of the server list : { "hosts" : [ "Server1" , "Server3" , "Server4" , "SRV1" , "SRV1" , "Web" ] }
 # and try to login against it. 
-#It will fail, of course. You have to configure the script to query your own itop instance!
+# It will fail, of course. You have to configure the script to query your own itop and ansible instances!
 
 
 ```

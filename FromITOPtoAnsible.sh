@@ -17,30 +17,31 @@
 #
 ############################################################## 
 
-# Parameters: Change this according to your itop credentials 
-#MY_USER=replace_for_your_itop_user
-#MY_PASS=replace_for_your_itop_password
-#ITOP_SERVER=replace_for_your_itop_server
+# Condfigurable parameters: Change this according to your itop credentials 
+# Change according your installation directory name : eg itop-itsm
+INSTALLATION_DIRECTORY=simple
 MY_USER=admin
 MY_PASS=admin
-ITOP_SERVER=itop.hi.inet
+ITOP_SERVER=demo.combodo.com
+# If we have enabled https authentication in itop, set this to YES 
+HTTPS=Y
 
-# If we want to use https instead http
-HTTPS=NO
 # End of configurable parameters
 
-# Other parameters
-SERVER="${PROTOCOL}://${ITOP_SERVER}/itop-itsm/webservices/export.php?c%5Bmenu%5D=ExportMenu"
+# Other non configurable parameters
+SERVER=
+PROTOCOL=http
 TEMP_CSV_FILE=out.csv
 MODE_FLAG=0
 CATEGORY=
 RULE=
-PROTOCOL=http
+# End of non configurable parameters
 
 
 # This functions is not mine. Credits to 
 # cdown / gist:1163649 https://gist.github.com/cdown/1163649
-urlencode() {
+urlencode( )
+{
     # urlencode <string>
  
     local length="${#1}"
@@ -60,6 +61,8 @@ SetVariables( )
         [ ` echo $HTTPS | grep -i Y | wc -l ` -eq 1 ] && PROTOCOL=https 
 	[[ -z "$FIELD" ]] && FIELD=name
 	ENCODED_STRING=`urlencode "$OQL"`
+        SERVER="${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/export.php?c%5Bmenu%5D=ExportMenu"
+
 	URL_STRING="&expression="${ENCODED_STRING}
 	LAST_URL_OPTIONS="&format=csv&login_mode=basic&fields=${FIELD}"
 }
@@ -79,15 +82,15 @@ QueryITOP( )
 
 QueryITOPAudit( )
 {
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/itop-itsm/pages/audit.php?operation=csv&category=$CATEGORY&rule=$RULE&filename=audit.csv&c%5Borg_id%5D=$ORGANIZATION" > $TEMP_CSV_FILE
+ curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/audit.php?operation=csv&category=$CATEGORY&rule=$RULE&filename=audit.csv&c%5Borg_id%5D=$ORGANIZATION" > $TEMP_CSV_FILE
 }
 
 QueryITOPFilter( )
 {
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/itop-itsm/pages/UI.php?operation=search&filter=${FILTER}&format=csv" > $TEMP_CSV_FILE
+ curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/UI.php?operation=search&filter=${FILTER}&format=csv" > $TEMP_CSV_FILE
 RIGHT_PART=`grep -o  expression.*\"\>Dow  $TEMP_CSV_FILE |  cut -d\" -f1`
 
- curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/itop-itsm/webservices/export.php?${RIGHT_PART}"  > $TEMP_CSV_FILE
+ curl -s -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/export.php?${RIGHT_PART}"  > $TEMP_CSV_FILE
 
 }
 

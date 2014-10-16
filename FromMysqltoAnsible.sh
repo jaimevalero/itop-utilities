@@ -14,6 +14,10 @@
 # Do a ping against all VM 
 # export SQL="SELECT vm from inventario.vmlist  " ; ansible all -i FromITOPtoAnsible.sh -m shell -m "ping"
 #
+# You can also set variables to ansible, eg :
+# export VAR="\"ansible_ssh_pass\" : \"mypassword\" "
+# so you can set ssh password to be used.
+#
 ############################################################## 
 
 # Parameters: Change this according to your itop credentials 

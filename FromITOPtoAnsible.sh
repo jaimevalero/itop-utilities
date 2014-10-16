@@ -7,9 +7,12 @@
 # a yaml hosts list to be used as a Dynamic Inventory Source 
 # for ansible commands 
 # 
-# Parameters : Passed as enviroment variable 
-#  OQL = Sentence in OQL 
-#  FIELD = (optional) name of the field to be used as hostname 
+# Parameters : Passed as enviroment variable, it could be one of the following
+ 
+#  OQL = Sentence in OQL l, eg OQL="SELECT Server WHERE status = 'stock'"
+#  OQL = Link to an audit rule, eg OQL="https://demo.combodo.com/simple/pages/audit.php?operation=csv&category=3&rule=1&c[menu]=Audit"
+#  OQL = Name of an existing audit rule, to get objects from, eg OQL="Server in Stock"
+#  FIELD = (optional) name of the field to be used as hostname
 # 
 # Usage example :
 #   
@@ -37,7 +40,7 @@ HTTPS=Y
 SERVER=
 PROTOCOL=http
 TEMP_CSV_FILE=out.csv
-MODE_FLAG=0
+MODE_FLAG=description
 CATEGORY=
 RULE=
 CURL_OPTIONS='-s '
@@ -80,7 +83,8 @@ PreWork( )
 {
 	SetVariables
   # If we detect OQL variable is a link from an audit category, change the mode
-  [ ` echo $OQL | grep -i http | grep -i category | grep -i rule | wc -l ` -eq 1 ] && MODE_FLAG='audit'
+  [ ` echo $OQL | grep SELECT | wc -l ` -eq 1 ] && MODE_FLAG='select' 
+  [ ` echo $OQL | grep -i http | grep -i category | grep -i rule | wc -l ` -eq 1 ] && MODE_FLAG='audit' 
   [ ` echo $OQL | grep -i http | grep -i filter  | wc -l`  -eq 1 ] && MODE_FLAG='filter'
 }
 
@@ -136,6 +140,7 @@ ExtractValuesAudit( )
   
 }
 
+
 ExtractValuesFilter( )
 {
   FILTER=`echo $OQL |  egrep -o --colour  'filter='[a-zA-Z0-9\%]*  | cut -d\= -f2`
@@ -143,6 +148,20 @@ ExtractValuesFilter( )
 
 }
 
+ExtractValuesDescription( )
+{
+   # Resolve the audit category (Name of the audit category must by univoque)
+   FILE_TMP=/tmp/kk-tmp-$$
+
+   curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/audit.php?c%5Borg_id%5D=999&c%5Bmenu%5D=Audit" > $FILE_TMP
+ 
+   LAST_URL=`grep -i "$OQL" $FILE_TMP  | egrep -o audit.* | cut -d\" -f1`
+   OQL="${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/$LAST_URL"
+   
+   rm -f $FILE_TMP
+
+
+}
 #
 # Query the OQL looking for audit category or OQL SELECT
 #, urlencode it, send it to the itop server
@@ -151,17 +170,27 @@ ExtractValuesFilter( )
 ItopDialog( )
 {
   case $MODE_FLAG in
-    0)
-      # Query ITOP's php export webservice
-		  QueryITOP
+  
+   ( description )
+     ExtractValuesDescription
 
-		  # Format itop response
- 			BuildYAMLOutput
+      ExtractValuesAudit
+      QueryITOPAudit
+      BuildYAMLOutputAudit
+    ;;
+
+   ( select )
+      # Query ITOP's php export webservice
+      QueryITOP
+
+      # Format itop response
+      BuildYAMLOutput
       ;; 
   ( audit )  #
-		  ExtractValuesAudit
-		  QueryITOPAudit
-		  BuildYAMLOutputAudit
+
+      ExtractValuesAudit
+      QueryITOPAudit
+      BuildYAMLOutputAudit
       ;;
 
   ( filter )

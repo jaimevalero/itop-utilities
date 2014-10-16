@@ -8,20 +8,26 @@
 # for ansible commands 
 # 
 # Parameters : Passed as enviroment variable, it could be one of the following
- 
-#  OQL = Sentence in OQL l, eg OQL="SELECT Server WHERE status = 'stock'"
-#  OQL = Link to an audit rule, eg OQL="https://demo.combodo.com/simple/pages/audit.php?operation=csv&category=3&rule=1&c[menu]=Audit"
-#  OQL = Name of an existing audit rule, to get objects from, eg OQL="Server in Stock"
+# 
+#  OQL = Sentence in OQL l, 
+#      eg export OQL="SELECT Server WHERE status = 'stock'"
+#
+#  OQL = Link to an audit rule, 
+#      eg OQL="https://demo.combodo.com/simple/pages/audit.php?operation=csv&category=3&rule=1&c[menu]=Audit"
+#
+#  OQL = Name of an existing audit rule, to get objects from, 
+#      eg OQL="Server in Stock"
 #  FIELD = (optional) name of the field to be used as hostname
+#
+#  You can also set variables to ansible, eg :
+#  export VAR="\"ansible_ssh_pass\" : \"mypassword\" "
+#  so you can set ssh password to be used.
 # 
 # Usage example :
 #   
 # Do a ping against all VM belonging to hypervisor prod-epg-esxi-04.hi.inet 
 # export OQL="SELECT VirtualMachine WHERE virtualhost_name = 'prod-epg-esxi-04.hi.inet' " ; ansible all -i FromITOPtoAnsible.sh -m shell -m "ping"
 #
-# You can also set variables to ansible, eg :
-# export VAR="\"ansible_ssh_pass\" : \"mypassword\" "
-# so you can set ssh password to be used.
 #
 ############################################################## 
 

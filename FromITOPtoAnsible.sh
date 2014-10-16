@@ -16,6 +16,10 @@
 # Do a ping against all VM belonging to hypervisor prod-epg-esxi-04.hi.inet 
 # export OQL="SELECT VirtualMachine WHERE virtualhost_name = 'prod-epg-esxi-04.hi.inet' " ; ansible all -i FromITOPtoAnsible.sh -m shell -m "ping"
 #
+# You can also set variables to ansible, eg :
+# export VAR="\"ansible_ssh_pass\" : \"mypassword\" "
+# so you can set ssh password to be used.
+#
 ############################################################## 
 
 # Condfigurable parameters: Change this according to your itop credentials 

@@ -40,6 +40,7 @@ ITOP_SERVER=demo.combodo.com
 # If we have enabled https authentication in itop, set this to YES 
 HTTPS=Y
 
+
 # End of configurable parameters
 
 # Other non configurable parameters
@@ -102,6 +103,7 @@ QueryITOP( )
 QueryITOPAudit( )
 {
  curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/audit.php?operation=csv&category=$CATEGORY&rule=$RULE&filename=audit.csv&c%5Borg_id%5D=$ORGANIZATION" > $TEMP_CSV_FILE
+
 }
 
 QueryITOPFilter( )
@@ -130,7 +132,22 @@ BuildYAMLOutput( )
 
 AnsibleReturnHostsList( )
 {
-	echo "{ \"hosts\" : [ ${HOST_LIST} ] }"
+#	echo "{ \"hosts\" : [ ${HOST_LIST} ] }"
+if [ ${#VAR} -gt 0 ]
+then
+  echo "{ \"hosts\" : [ ${HOST_LIST} ] ,"
+
+  echo '"_meta" : {'
+  echo '  "hostvars" : {'
+echo ${HOST_LIST} | sed -e "s/\" /\" : \{ ${VAR} \} /g" |  sed -e "s/\"$/\" : \{ ${VAR} \} /g"
+  echo '      }'
+  echo '   }'
+  echo '}'
+else
+    echo "{ \"hosts\" : [ ${HOST_LIST} ] }"
+fi
+
+
 }
 
 PostWork( )
@@ -159,8 +176,7 @@ ExtractValuesDescription( )
    # Resolve the audit category (Name of the audit category must by univoque)
    FILE_TMP=/tmp/kk-tmp-$$
 
-   curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/audit.php?c%5Borg_id%5D=999&c%5Bmenu%5D=Audit" > $FILE_TMP
- 
+   curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers "${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/audit.php?c%5Borg_id%5D=999&c%5Bmenu%5D=Audit" | sed -e 's/\&aacute;/á/g' -e 's/\&eacute;/é/g' -e 's/\&iacute;/í/g' -e 's/\&oacute;/ó/g' -e 's/\&uacute;/ú/g' -e 's/\&ntilde;/ñ/g' -e 's/\&Aacute;/Á/g' -e 's/\&Eacute;/É/g' -e 's/\&Iacute;/Í/g' -e 's/\&Oacute;/Ó/g' -e 's/\&Uacute;/Ú/g' -e 's/\&Ntilde;/Ñ/g'  > $FILE_TMP
    LAST_URL=`grep -i "$OQL" $FILE_TMP  | egrep -o audit.* | cut -d\" -f1`
    OQL="${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/pages/$LAST_URL"
    
@@ -178,8 +194,7 @@ ItopDialog( )
   case $MODE_FLAG in
   
    ( description )
-     ExtractValuesDescription
-
+      ExtractValuesDescription
       ExtractValuesAudit
       QueryITOPAudit
       BuildYAMLOutputAudit

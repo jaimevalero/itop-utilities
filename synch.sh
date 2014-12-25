@@ -13,7 +13,7 @@
 # - Also you need access to itop, with a valid itop user
 # 
 # The script uses one or more mapping file passed as arguments to generate csv files,
-# then copy the csv files to the itop server, executing the import.php webservices
+# then executing the import.php webservices, to import the csv into new itop objects.
 #
 ###########################################################
 
@@ -46,7 +46,7 @@ CURL_OPTIONS=''
 
 #######################################################
 #
-# Funcion PrintLog
+# Function PrintLog
 #
 # Shows a line to screen and log file
 #
@@ -210,17 +210,14 @@ SEPARATOR="|"
   mv -f  $CSV_FILE.formatted $CSV_FILE 
   sed -i 's/\\$//g' $CSV_FILE
 
+  # Encode arguments
   RECONCILIATION_KEYS_ENCODED=$(rawurlencode "$RECONCILIATION_KEYS")
   QUALIFIER_ENCODED=$(rawurlencode "${SEPARATOR}")
+
   # Execute webservice 
    echo  " curl $CURL_OPTIONS -v -X POST -v --data-urlencode 'csvdata="  > tempfile-$$
    cat $CSV_FILE | tr  "'"  '"' >> tempfile-$$
    echo "' --user $ITOP_USER:$ITOP_PASS -o tempfile-${MY_ID}-2 \"${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/import.php?class=${CLASS_NAME}&output=details&charset=UTF-8&reconciliationkeys=${RECONCILIATION_KEYS_ENCODED}&qualifier=${QUALIFIER_ENCODED}\"" >>  tempfile-$$
-
-
-
-
-# echo " curl -v -X POST -v --data 'csvdata=`head -5 $CSV_FILE`' --user $ITOP_USER:$ITOP_PASS -o tempfile-$MY_ID-2 \"http://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/import.php?class=${CLASS_NAME}&output=details&charset=UTF-8&reconciliationkeys=$RECONCILIATION_KEYS\""   > tempfile-$$ 
 
   # Show results
   PrintLog Execute command : `cat tempfile-$$ `
@@ -231,7 +228,7 @@ SEPARATOR="|"
 
   # Store results for audit purposes
   mv -f tempfile-$$-2 $WORKING_PATH/spool/$COUNTER-`basename $FILE |sed -e 's/\.config//g' `_$CLASS_NAME.results
-#  rm -f ./tempfile-$$ 
+  rm -f ./tempfile-$$ 
   cp -f $FILE $WORKING_PATH/spool/`basename $FILE` 
  
 done

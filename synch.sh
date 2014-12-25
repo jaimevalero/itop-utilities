@@ -9,7 +9,8 @@
 # Prerequisites:
 #
 # - You need mysql client installed, and access to mysql server
-# - Also you need access to itop (ssh without password, for the user SSH_USER_DESTINATION_SERVER 
+# - Mysql server has to be in the same server the script is installed
+# - Also you need access to itop, with a valid itop user
 # 
 # The script uses one or more mapping file passed as arguments to generate csv files,
 # then copy the csv files to the itop server, executing the import.php webservices
@@ -22,24 +23,7 @@
 #
 ############################################################
 
-# Mysql credentials and host
-# Change this according your mysql server instance
-MYSQL_USER=root
-MYSQL_PASS=fakepass
-
-# Itop server and ssh user to access it (passwordless ssh access has to be configured)
-# Change this according your itop instance
-DESTINATION_SERVER=itop.hi.inet.
-SSH_USER_DESTINATION_SERVER=cmdb
-WEBSERVICE_FULL_PATH=/usr/share/itop-itsm/webservices/import.php
-
-# Path on "local" server
-# Path of the script
-# Change this according the directory where this is 
-LOG_FILE=/var/log/`basename $0`.log
-
-# Path on the remote server where to scp the csv file
-DESTINATION_PATH=/tmp/
+# Stored in .credentials
 
 ###########################################################
 # End of configurable parameters
@@ -57,6 +41,8 @@ HEADER_SECTION=''
 
 BODY_SECTION_TEMP=''
 BODY_SECTION=''
+PROTOCOL=http
+CURL_OPTIONS=''
 
 #######################################################
 #
@@ -95,17 +81,55 @@ GetWorkingPath( )
 PreWork( )
 {
   GetWorkingPath 
+  MY_ID=$$
 
   clear
-  PrintLog START : 
   rm -f $WORKING_PATH/spool/*csv
   mkdir -p $WORKING_PATH/spool 2>/dev/null 
   cd $WORKING_PATH 2>/dev/null
-  # Deleting temp files older than 2 days
+  #PrintLog Loading Credentials prwd:$PWD `ls -altr $PWD/.credentials`
+  source $PWD/.credentials
+   
+ # Deleting temp files older than 2 days
   find . -maxdepth 1 -type f -name "tempfile-*" -mtime +2 | xargs rm -f 
+
+  [ ` echo $HTTPS | grep -i Y | wc -l ` -eq 1 ] && PROTOCOL=https && CURL_OPTIONS=' -k ' 
+
 }
 
+CheckPrerequisites( )
+{
+ # Check mysql access
+ mysql -h $MYSQL_HOSTNAME -u${MYSQL_USER} -p${MYSQL_PASS} -e "show databases " 2>/dev/null 1>/dev/null
+ RESULT=$?
+ [ $RESULT -ne 0 ] && PrintLog "Error checking mysql access. Check credentials provided in the script are correct mysql_host:$MYSQL_HOSTNAME mysql_user:${MYSQL_USER} mysql_pass:${MYSQL_PASS} . Exit" && exit
+
+
+ # Check webservice exists TODO
+}
+
+rawurlencode() {
+  local string="${*}"
+  local strlen=${#string}
+  local encoded=""
+
+  for (( pos=0 ; pos<strlen ; pos++ )); do
+     c=${string:$pos:1}
+     case "$c" in
+        [-_.~a-zA-Z0-9] ) o="${c}" ;;
+        * )               printf -v o '%%%02x' "'$c"
+     esac
+     encoded+="${o}"
+  done
+  echo "${encoded}"    # You can either set a return variable (FASTER) 
+  REPLY="${encoded}"   #+or echo the result (EASIER)... or both... :p
+}
+
+PrintLog START :
+
 PreWork
+CheckPrerequisites
+
 
 # Set config file list 
 FILES=`find $WORKING_PATH/config -type f`
@@ -151,20 +175,22 @@ do
   rm -f $CSV_FILE   2>/dev/null
   rm -f /tmp/kksqlsyn 2>/dev/null
 
+SEPARATOR="|"
   #  Generate SQL
   echo "SELECT $BODY_FINAL " > $SQL_FILE  
   echo "Union ALL (" >> $SQL_FILE
   echo "   SELECT $HEADER_FINAL " >> $SQL_FILE
   echo "   INTO OUTFILE \"/tmp/`basename $CSV_FILE`\"  " >> $SQL_FILE
-  echo "   FIELDS TERMINATED BY \";\" OPTIONALLY ENCLOSED BY '\"' " >> $SQL_FILE
+#  echo "   FIELDS TERMINATED BY \";\" OPTIONALLY ENCLOSED BY '\"' " >> $SQL_FILE
+ echo "   FIELDS TERMINATED BY \";\" OPTIONALLY ENCLOSED BY '$SEPARATOR' " >> $SQL_FILE
   echo "   LINES TERMINATED BY \"\\n\" " >> $SQL_FILE
   echo "   FROM $TABLA_ORIGEN " >> $SQL_FILE
   echo " ) " >> $SQL_FILE
 
   # Execute SQl to generate CSV
   PrintLog "Executing: mysql -h $MYSQL_HOSTNAME -u${MYSQL_USER} -p${MYSQL_PASS} < $SQL_FILE "  
-  mysql -u${MYSQL_USER} -p${MYSQL_PASS} < $SQL_FILE 1>>/tmp/kksqlsyn 2>>/tmp/kksqlsyn
-exit   
+  mysql -h $MYSQL_HOSTNAME -u${MYSQL_USER} -p${MYSQL_PASS} < $SQL_FILE 1>>/tmp/kksqlsyn 2>>/tmp/kksqlsyn
+  
   # Test Case : We do not have generated the csv from the sql ( sql is not correct) 
   Resul=$?
   if [ $Resul -ne 0 ] 
@@ -184,22 +210,28 @@ exit
   mv -f  $CSV_FILE.formatted $CSV_FILE 
   sed -i 's/\\$//g' $CSV_FILE
 
-  # Copy to itop server  
-  scp -q -B $CSV_FILE cmdb@$DESTINATION_SERVER:$DESTINATION_PATH
-  
+  RECONCILIATION_KEYS_ENCODED=$(rawurlencode "$RECONCILIATION_KEYS")
+  QUALIFIER_ENCODED=$(rawurlencode "${SEPARATOR}")
   # Execute webservice 
-  SHORT_CSV_FILE=`basename $CSV_FILE`
-  echo " ssh  $SSH_USER_DESTINATION_SERVER@$DESTINATION_SERVER  ' sudo php $WEBSERVICE_FULL_PATH --auth_user=admin --auth_pwd=admin  --csvfile=$DESTINATION_PATH/$SHORT_CSV_FILE  --class=$CLASS_NAME --output=details --charset=UTF-8   --reconciliationkeys=\"$RECONCILIATION_KEYS\" '" > tempfile-$$ 
+   echo  " curl $CURL_OPTIONS -v -X POST -v --data-urlencode 'csvdata="  > tempfile-$$
+   cat $CSV_FILE | tr  "'"  '"' >> tempfile-$$
+   echo "' --user $ITOP_USER:$ITOP_PASS -o tempfile-${MY_ID}-2 \"${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/import.php?class=${CLASS_NAME}&output=details&charset=UTF-8&reconciliationkeys=${RECONCILIATION_KEYS_ENCODED}&qualifier=${QUALIFIER_ENCODED}\"" >>  tempfile-$$
+
+
+
+
+# echo " curl -v -X POST -v --data 'csvdata=`head -5 $CSV_FILE`' --user $ITOP_USER:$ITOP_PASS -o tempfile-$MY_ID-2 \"http://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/import.php?class=${CLASS_NAME}&output=details&charset=UTF-8&reconciliationkeys=$RECONCILIATION_KEYS\""   > tempfile-$$ 
 
   # Show results
   PrintLog Execute command : `cat tempfile-$$ `
-  chmod +x tempfile-$$ && ./tempfile-$$ 1>tempfile-$$-2 2>/dev/null
-  cat tempfile-$$-2 | grep -v ";unchanged;"
-  PrintLog Results: `basename $FILE`` tail -5 tempfile-$$-2 ` 
+  PrintLog " Progress webservice execution " 
+  chmod +x tempfile-$$ && ./tempfile-$$ 2>/dev/null 
+  cat tempfile-${MY_ID}-2 | grep -v ";unchanged;"
+  PrintLog Results: `basename $FILE` ` tail -5 tempfile-${MY_ID}-2 ` 
 
   # Store results for audit purposes
   mv -f tempfile-$$-2 $WORKING_PATH/spool/$COUNTER-`basename $FILE |sed -e 's/\.config//g' `_$CLASS_NAME.results
-  rm -f ./tempfile-$$ 
+#  rm -f ./tempfile-$$ 
   cp -f $FILE $WORKING_PATH/spool/`basename $FILE` 
  
 done

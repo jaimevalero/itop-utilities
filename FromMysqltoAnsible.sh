@@ -20,10 +20,18 @@
 #
 ############################################################## 
 
-# Parameters: Change this according to your itop credentials 
-MY_USER=change_to_mysql_user
-MY_PASS=change_to_mysql__password
-MY_SQL_SERVER=change_to_mysql_Server
+###########################################################
+#
+# Configurable parameters
+#
+############################################################
+
+# Stored in .credentials
+
+###########################################################
+# End of configurable parameters
+#
+############################################################
 # End of configurable parameters
 
 TRACE_FILE=/var/log/`basename $0`.log
@@ -35,6 +43,26 @@ ShowLog( )
 }
 
 # Other parameters
+
+GetWorkingPath( )
+{
+  # GetWorking Path
+  FULL_SCRIPT_PATH=`readlink -f $0`
+  WORKING_PATH=`dirname $FULL_SCRIPT_PATH`
+}
+
+PreWork( )
+{
+  GetWorkingPath 
+  source $PWD/.credentials
+
+  MY_USER=${MYSQL_USER}
+  MY_PASS=${MYSQL_PASS}
+  MY_SQL_SERVER=${MYSQL_HOSTNAME}
+
+}
+
+PreWork
 
 # Get Host List
 HOST_LIST=`mysql -u$MY_USER -p$MY_PASSWORD -h$MY_SQL_SERVER -N -e "${SQL}" | sed -e 's/^/\"/g'| sed -e 's/$/\"/g'   | sed ':a;N;$!ba;s/\n/ , /g'`

@@ -1,3 +1,4 @@
 spool
 temp-*
 .credentials
+.gitignore

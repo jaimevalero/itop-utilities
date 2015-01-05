@@ -31,18 +31,18 @@
 #
 ############################################################## 
 
-# Condfigurable parameters: Change this according to your itop credentials 
-# Change according your installation directory name : eg itop-itsm
-INSTALLATION_DIRECTORY=simple
-MY_USER=admin
-MY_PASS=admin
-ITOP_SERVER=demo.combodo.com
-# If we have enabled https authentication in itop, set this to YES 
-HTTPS=Y
+###########################################################
+#
+# Configurable parameters
+#
+############################################################
 
+# Stored in .credentials
 
+###########################################################
 # End of configurable parameters
-
+#
+############################################################
 # Other non configurable parameters
 SERVER=
 PROTOCOL=http
@@ -75,20 +75,37 @@ urlencode( )
 # If env variable FIELD is unset, set it to "name"
 SetVariables( )
 {
-        # If we use https, change options accordingly
-        [ ` echo $HTTPS | grep -i Y | wc -l ` -eq 1 ] && PROTOCOL=https && CURL_OPTIONS='-s -k ' && WGET_OPTIONS='-q --no-check-certificate'
+  # Load From Credentials 
+  MY_USER=${ITOP_USER}
+  MY_PASS=${ITOP_PASS}
 
-	[[ -z "$FIELD" ]] && FIELD=name
-	ENCODED_STRING=`urlencode "$OQL"`
-        SERVER="${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/export.php?c%5Bmenu%5D=ExportMenu"
 
-	URL_STRING="&expression="${ENCODED_STRING}
-	LAST_URL_OPTIONS="&format=csv&login_mode=basic&fields=${FIELD}"
+  # If we use https, change options accordingly
+  [ ` echo $HTTPS | grep -i Y | wc -l ` -eq 1 ] && PROTOCOL=https && CURL_OPTIONS='-s -k ' && WGET_OPTIONS='-q --no-check-certificate'
+
+  [[ -z "$FIELD" ]] && FIELD=name
+  ENCODED_STRING=`urlencode "$OQL"`
+  SERVER="${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/export.php?c%5Bmenu%5D=ExportMenu"
+
+  URL_STRING="&expression="${ENCODED_STRING}
+  LAST_URL_OPTIONS="&format=csv&login_mode=basic&fields=${FIELD}"
+}
+
+GetWorkingPath( )
+{
+  # GetWorking Path
+  FULL_SCRIPT_PATH=`readlink -f $0`
+  WORKING_PATH=`dirname $FULL_SCRIPT_PATH`
 }
 
 PreWork( )
 {
-	SetVariables
+  GetWorkingPath 
+  source $PWD/.credentials
+  MY_USER=${ITOP_USER}
+  MY_PASS=${ITOP_PASS}
+
+  SetVariables
   # If we detect OQL variable is a link from an audit category, change the mode
   [ ` echo $OQL | grep SELECT | wc -l ` -eq 1 ] && MODE_FLAG='select' 
   [ ` echo $OQL | grep -i http | grep -i category | grep -i rule | wc -l ` -eq 1 ] && MODE_FLAG='audit' 
@@ -97,7 +114,7 @@ PreWork( )
 
 QueryITOP( )
 {
-	wget ${WGET_OPTIONS} -O $TEMP_CSV_FILE --http-user=$MY_USER --http-password=$MY_PASS  ${SERVER}${URL_STRING}${LAST_URL_OPTIONS}
+  wget ${WGET_OPTIONS} -O $TEMP_CSV_FILE --http-user=$MY_USER --http-password=$MY_PASS  ${SERVER}${URL_STRING}${LAST_URL_OPTIONS}
 }
 
 QueryITOPAudit( )

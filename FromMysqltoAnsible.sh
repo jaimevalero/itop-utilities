@@ -55,17 +55,12 @@ PreWork( )
 {
   GetWorkingPath 
   source $PWD/.credentials
-
-  MY_USER=${MYSQL_USER}
-  MY_PASS=${MYSQL_PASS}
-  MY_SQL_SERVER=${MYSQL_HOSTNAME}
-
 }
 
 PreWork
 
 # Get Host List
-HOST_LIST=`mysql -u$MY_USER -p$MY_PASSWORD -h$MY_SQL_SERVER -N -e "${SQL}" | sed -e 's/^/\"/g'| sed -e 's/$/\"/g'   | sed ':a;N;$!ba;s/\n/ , /g'`
+HOST_LIST=`mysql -u${MYSQL_USER} -p${MYSQL_PASS} -h${MYSQL_HOSTNAME} -N -e "${SQL}" | sed -e 's/^/\"/g'| sed -e 's/$/\"/g'   | sed ':a;N;$!ba;s/\n/ , /g'`
 
 # If there are defined ext args, we add the _meta section
 if [ ${#VAR} -gt 0 ]

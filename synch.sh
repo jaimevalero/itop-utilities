@@ -13,7 +13,7 @@
 # - Also you need access to itop, with a valid itop user
 # 
 # The script uses one or more mapping file passed as arguments to generate csv files,
-# then executing the import.php webservices, to import the csv into new itop objects.
+# then copy the csv files to the itop server, executing the import.php webservices
 #
 ###########################################################
 
@@ -46,7 +46,7 @@ CURL_OPTIONS=''
 
 #######################################################
 #
-# Function PrintLog
+# Funcion PrintLog
 #
 # Shows a line to screen and log file
 #
@@ -145,11 +145,11 @@ do
 
   COUNTER=$((COUNTER+1))
   PrintLog Config File: $FILE
-  # Remove comments and blank lines from the config file  
-  grep -v \# $FILE | egrep -v '^ *$'  > $FILE.formatted
+  # Remove comments from the config file  
+  grep -v \# $FILE  > $FILE.formatted
   # Remove empty lines
-  # sed -i '/^$/d' $FILE.formatted
-  
+  sed -i '/^$/d' $FILE.formatted
+
   TABLA_ORIGEN=` head -1 $FILE.formatted |cut -d\; -f1  `
   CLASS_NAME=` head -1 $FILE.formatted | cut -d\; -f2 |tr -d \    `
   RECONCILIATION_KEYS=` head -1 $FILE.formatted | cut -d\; -f3` 
@@ -210,14 +210,11 @@ SEPARATOR="|"
   mv -f  $CSV_FILE.formatted $CSV_FILE 
   sed -i 's/\\$//g' $CSV_FILE
 
-  # Encode arguments
   RECONCILIATION_KEYS_ENCODED=$(rawurlencode "$RECONCILIATION_KEYS")
   QUALIFIER_ENCODED=$(rawurlencode "${SEPARATOR}")
-
   # Execute webservice 
-   echo  " curl $CURL_OPTIONS -v -X POST -v --data-urlencode 'csvdata="  > tempfile-$$
-   cat $CSV_FILE | tr  "'"  '"' >> tempfile-$$
-   echo "' --user $ITOP_USER:$ITOP_PASS -o tempfile-${MY_ID}-2 \"${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/import.php?class=${CLASS_NAME}&output=details&charset=UTF-8&reconciliationkeys=${RECONCILIATION_KEYS_ENCODED}&qualifier=${QUALIFIER_ENCODED}\"" >>  tempfile-$$
+   echo  " curl $CURL_OPTIONS -v -X POST -v --data-urlencode 'csvdata@$CSV_FILE' \\"  > tempfile-$$
+   echo " --user $ITOP_USER:$ITOP_PASS -o tempfile-${MY_ID}-2 \"${PROTOCOL}://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/import.php?class=${CLASS_NAME}&output=details&charset=UTF-8&reconciliationkeys=${RECONCILIATION_KEYS_ENCODED}&qualifier=${QUALIFIER_ENCODED}\"" >>  tempfile-$$
 
   # Show results
   PrintLog Execute command : `cat tempfile-$$ `
@@ -228,7 +225,7 @@ SEPARATOR="|"
 
   # Store results for audit purposes
   mv -f tempfile-$$-2 $WORKING_PATH/spool/$COUNTER-`basename $FILE |sed -e 's/\.config//g' `_$CLASS_NAME.results
-  rm -f ./tempfile-$$ 
+#  rm -f ./tempfile-$$ 
   cp -f $FILE $WORKING_PATH/spool/`basename $FILE` 
  
 done

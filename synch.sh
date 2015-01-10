@@ -46,7 +46,7 @@ CURL_OPTIONS=''
 
 #######################################################
 #
-# Funcion PrintLog
+# Function PrintLog
 #
 # Shows a line to screen and log file
 #
@@ -145,10 +145,9 @@ do
 
   COUNTER=$((COUNTER+1))
   PrintLog Config File: $FILE
-  # Remove comments from the config file  
-  grep -v \# $FILE  > $FILE.formatted
-  # Remove empty lines
-  sed -i '/^$/d' $FILE.formatted
+  
+  # Remove comments and blank lines from the config file  
+  grep -v \# $FILE | egrep -v '^ *$'  > $FILE.formatted
 
   TABLA_ORIGEN=` head -1 $FILE.formatted |cut -d\; -f1  `
   CLASS_NAME=` head -1 $FILE.formatted | cut -d\; -f2 |tr -d \    `
@@ -225,7 +224,7 @@ SEPARATOR="|"
 
   # Store results for audit purposes
   mv -f tempfile-$$-2 $WORKING_PATH/spool/$COUNTER-`basename $FILE |sed -e 's/\.config//g' `_$CLASS_NAME.results
-#  rm -f ./tempfile-$$ 
+  rm -f ./tempfile-$$ 
   cp -f $FILE $WORKING_PATH/spool/`basename $FILE` 
  
 done

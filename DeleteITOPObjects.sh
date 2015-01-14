@@ -99,7 +99,7 @@ cat salida-$$  >> $LOG_FILE
 
 PostWork( )
 {
-rm -f salida-11
+rm -f salida-$$
 PrintLog END
 }
 ############################

@@ -105,7 +105,6 @@ Generate_VMList
 
 while read vm
 do
-	# /opt/dSNmanivela/sources/src/bin/VMoperations.pl --vmName test-epg-cmdb-01  --operation powerOn --username maestrodev --password 1maestrodev2 --server prod-epg-vc-01
 	echo $PERL_SCRIPT --vmName $vm --operation $operation --username $vi_user --password $vi_password --server $vi_center  >> $SCRIPT_FILE
 
 done < $FILE_LIST 

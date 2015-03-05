@@ -11,6 +11,7 @@
 #   Just export the OQL and executes the script   
 #
 ############################################################## 
+# TODO: It does NOT delete objects under https. 
 
 # Condfigurable parameters: Change this according to your itop credentials 
 # Change according your installation directory name : eg itop-itsm

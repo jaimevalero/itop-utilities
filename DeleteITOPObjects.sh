@@ -8,10 +8,9 @@
 #
 # 
 # Usage example :
-#   Just export the OQL and executes the script   
+#   
 #
 ############################################################## 
-# TODO: It does NOT delete objects under https. 
 
 # Condfigurable parameters: Change this according to your itop credentials 
 # Change according your installation directory name : eg itop-itsm
@@ -22,7 +21,8 @@ CREDENTIALS_FILE=.credentials
 
 # Other non configurable parameters
 HEADER='Content-Type: application/json'
-INITIAL="%7B%0A%20%20%20%22operation%22%3A%20%22core%2Fdelete%22%2C%0A%20%20%20%22class%22%3A%20%22CLASS%22%2C%0A%20%20%20%22key%22%3A%20%22OQL%22%0A%7D%0A%0A"
+INITIAL=""
+
 LOG_FILE=/var/log/` basename $0`
 # End of non configurable parameters
 #######################################################
@@ -77,9 +77,19 @@ PreWork( )
 } 
 PrepareCURL( )
 {
-# Build URL
-URL="http://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/rest.php?version=1.0&auth_user=${ITOP_USER}&auth_pwd=${ITOP_PASS}"
+if [ ` echo $HTTPS | grep -i y | wc -l ` -eq 1 ]
+then
+# https
+   URL="http://${ITOP_USER}:${ITOP_PASS}@${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/rest.php?version=1.0"
 
+   INITIAL="%7b%0d%0a+++%22version%22%3a+%221.0%22%2c%0d%0a+++%22operation%22%3a+%22core%2fdelete%22%2c%0d%0a+++%22class%22%3a+%22CLASS%22%2c%0d%0a+++%22key%22%3a+%22OQL%22%0d%0a%7d%0d%0a%0d%0a"
+else
+# http: Build URL
+   INITIAL="%7B%0A%20%20%20%22operation%22%3A%20%22core%2Fdelete%22%2C%0A%20%20%20%22class%22%3A%20%22CLASS%22%2C%0A%20%20%20%22key%22%3A%20%22OQL%22%0A%7D%0A%0A"
+
+   URL="http://${ITOP_SERVER}/${INSTALLATION_DIRECTORY}/webservices/rest.php?version=1.0&auth_user=${ITOP_USER}&auth_pwd=${ITOP_PASS}"
+
+fi
 # Get text replacements
 CLASS=`echo $OQL | awk '{print $2}'`
 OQL_ENCODED=` urlencode "$OQL"`
@@ -90,9 +100,17 @@ RAW=`echo $INITIAL | sed -e "s/CLASS/$CLASS/g" | sed -e "s/OQL/$OQL_ENCODED/g" `
 
 PerformCURL( )
 {
-PrintLog "Executing curl -X POST -v -H "$HEADER" \"$URL&json_data=$RAW\" "
-curl -X POST -v -H "$HEADER" "$URL&json_data=$RAW" | jq . > salida-$$
+if [ ` echo $HTTPS | grep -i y | wc -l ` -eq 1 ]
+then
+  # https
+  PrintLog "Executing curl -k  --basic -X POST -v -H \"Content-Type: application/json\" \"$URL&json_data=$RAW\"  | jq . "
+  curl -k  --basic -X POST -v -H "Content-Type: application/json" "$URL&json_data=$RAW" | jq . > salida-$$
 
+else
+  # http
+  PrintLog "Executing curl -X POST -v -H "$HEADER" \"$URL&json_data=$RAW\" "
+  curl -X POST -v -H "$HEADER" "$URL&json_data=$RAW" | jq . > salida-$$
+fi
 cat salida-$$ | jq .
 cat salida-$$  >> $LOG_FILE
 

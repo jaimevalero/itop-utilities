@@ -180,6 +180,7 @@ SEPARATOR="|"
   echo "Union ALL (" >> $SQL_FILE
   echo "   SELECT $HEADER_FINAL " >> $SQL_FILE
   echo "   INTO OUTFILE \"/tmp/`basename $CSV_FILE`\"  " >> $SQL_FILE
+echo "   CHARACTER SET latin1  " >> $SQL_FILE
 #  echo "   FIELDS TERMINATED BY \";\" OPTIONALLY ENCLOSED BY '\"' " >> $SQL_FILE
  echo "   FIELDS TERMINATED BY \";\" OPTIONALLY ENCLOSED BY '$SEPARATOR' " >> $SQL_FILE
   echo "   LINES TERMINATED BY \"\\n\" " >> $SQL_FILE

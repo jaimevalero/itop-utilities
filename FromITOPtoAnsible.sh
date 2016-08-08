@@ -116,8 +116,8 @@ QueryITOP( )
 {
   wget ${WGET_OPTIONS} -O $TEMP_CSV_FILE --http-user=$MY_USER --http-password=$MY_PASS  ${SERVER}${URL_STRING}${LAST_URL_OPTIONS}
  RESUL=$?
-  [ $RESUL -ne 0  ] && curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers  ${SERVER}${URL_STRING
-}${LAST_URL_OPTIONS} > $TEMP_CSV_FILE
+  [ $RESUL -ne 0  ] && curl ${CURL_OPTIONS} -d "auth_pwd=$MY_PASS&auth_user=$MY_USER&loginop=login" --dump-header headers \
+  "${SERVER}${URL_STRING}${LAST_URL_OPTIONS}" > $TEMP_CSV_FILE
 }
 
 QueryITOPAudit( )

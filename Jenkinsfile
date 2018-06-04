@@ -3,9 +3,16 @@ node {
     stage('checkout') {
       checkout scm
     }
-    stage('compile') {
-      echo "nothing to compile for..."
-            sh(' git config -l ')
+    stage('get-config') {
+      echo "Git params" 
+      echo "=========="
+      sh(' git config -l ')
+      echo "Enviroment variables" 
+      echo "=========="
+      sh(' env ')
+      echo "SSH config" 
+      echo "=========="
+      sh(' cat $HOME/.ssh/config ')
     }
     stage('test') {
        echo "test"

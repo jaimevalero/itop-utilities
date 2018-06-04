@@ -11,7 +11,7 @@ node {
     }
     stage('package') {
       echo "test"
-      ls -latr 
+      sh('ls -latr ')
     }
     stage('publish') {
       echo "uploading package..."

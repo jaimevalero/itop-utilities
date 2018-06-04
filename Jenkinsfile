@@ -1,7 +1,7 @@
 node {
   try {
     stage('checkout') {
-      ## checkout scm
+      // checkout scm
     }
     stage('compile') {
       echo "nothing to compile for hello.sh..."
